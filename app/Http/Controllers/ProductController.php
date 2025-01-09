@@ -1,21 +1,26 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class ProductController extends Controller {
+class ProductController extends Controller
+{
 
-    function main() {
+    function main()
+    {
         return view('main');
     }
 
-    function fetch() {
+    function fetch()
+    {
         return view('fetch');
     }
 
-    public function index() {
+    public function index()
+    {
         return response()->json([
             'products' => Product::orderBy('name')->get()
         ]);
@@ -25,7 +30,8 @@ class ProductController extends Controller {
         //
     }*/
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name'  => 'required|unique:products|max:100|min:2',
             'price' => 'required|numeric|gte:0|lte:100000',
@@ -35,7 +41,7 @@ class ProductController extends Controller {
             $object = new Product($request->all());
             try {
                 $result = $object->save();
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 $result = false;
                 $message = $e->getMessage();
             }
@@ -46,10 +52,11 @@ class ProductController extends Controller {
         return response()->json(['result' => $result, 'message' => $message]);
     }
 
-    public function show($id) {
+    public function show($id)
+    {
         $product = Product::find($id);
         $message = '';
-        if($product === null) {
+        if ($product === null) {
             $message = 'Product not found.';
         }
         return response()->json([
@@ -62,19 +69,20 @@ class ProductController extends Controller {
         //
     }*/
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $message = '';
         $product = Product::find($id);
         $result = false;
-        if($product != null) {
+        if ($product != null) {
             $validator = Validator::make($request->all(), [
                 'name'  => 'required|max:100|min:2|unique:products,name,' . $product->id,
                 'price' => 'required|numeric|gte:0|lte:100000',
             ]);
-            if($validator->passes()) {
+            if ($validator->passes()) {
                 try {
                     $result = $product->update($request->all());
-                } catch(\Exception $e) {
+                } catch (\Exception $e) {
                     $message = $e->getMessage();
                 }
             } else {
@@ -86,21 +94,26 @@ class ProductController extends Controller {
         return response()->json(['result' => $result, 'message' => $message]);
     }
 
-    public function destroy($id) {
+    public function destroy($id)
+    {
         $product = Product::find($id);
+        $products = [];
         $message = '';
         $result = false;
-        if($product != null) {
+        if ($product != null) {
             try {
                 $result = $product->delete();
-            } catch(\Exception $e) {
+                $products = Product::orderBy('name')->get();
+            } catch (\Exception $e) {
                 $message = $e->getMessage();
             }
         } else {
             $message = 'Product not found';
         }
-        return response()->json(['result' => $result, 'message' => $message]);
+        return response()->json([
+            'result' => $result,
+            'message' => $message,
+            'products' => $products,
+        ]);
     }
 }
-
-
